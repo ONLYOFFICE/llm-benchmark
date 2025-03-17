@@ -70,7 +70,15 @@ jobs:
             --samples "${{ inputs.samples }}" \
             --languages "${{ inputs.language }}" \
             --dataset "data/${{ inputs.language }}/humanevalpack.jsonl" \
-            --provider-url "http://$ENDPOINT"
+            --provider-url "http://$ENDPOINT" | tee benchmark_output.log
+
+      - name: Output Benchmark Results to Summary
+        run: |
+          echo "## Benchllama Benchmark Results" >> $GITHUB_STEP_SUMMARY
+           echo "" >> $GITHUB_STEP_SUMMARY
+           echo "\`\`\`" >> $GITHUB_STEP_SUMMARY
+           cat benchmark_output.log >> $GITHUB_STEP_SUMMARY
+           echo "\`\`\`" >> $GITHUB_STEP_SUMMARY
 
       - name: Archive Benchmark Results
         uses: actions/upload-artifact@v4
