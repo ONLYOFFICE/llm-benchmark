@@ -7,6 +7,10 @@ on:
         description: "Model to benchmark"
         required: true
         default: "neuralmagic/Meta-Llama-3.1-8B-Instruct-FP8"
+      num_prompts:
+        description: "Number of prompts"
+        required: false
+        default: "20"
 
 jobs:
   benchmark:
@@ -38,7 +42,7 @@ jobs:
           echo "POD_ID=$POD_ID" >> $GITHUB_ENV
 
       - name: Wait for RunPod Instance
-        run: sleep 60
+        run: sleep 100
 
       - name: Retrieve RunPod Endpoint
         run: |
@@ -68,6 +72,7 @@ jobs:
               --model "${{ inputs.model }}" \
               --result-filename "benchmark_result.json" \
               --save-result \
+              --num-prompts ${{ inputs.num_prompts }} \
               --seed 12345 | tee benchmark_output.log
 
       - name: Generate Benchmark Summary
