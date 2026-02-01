@@ -28,7 +28,7 @@ jobs:
         uses: actions/checkout@v4
 
       - name: Install runpodctl
-        run: wget --quiet --show-progress https://github.com/Run-Pod/runpodctl/releases/download/v1.14.3/runpodctl-linux-amd64 -O runpodctl && chmod +x runpodctl && sudo cp runpodctl /usr/bin/runpodctl | sudo bash
+        run: wget --quiet --show-progress https://github.com/Run-Pod/runpodctl/releases/download/v1.14.3/runpodctl-linux-amd64 -O runpodctl && chmod +x runpodctl && sudo cp runpodctl /usr/bin/runpodctl
 
       - name: Configure runpodctl
         run: runpodctl config --apiKey ${{ secrets.API_KEY }}
@@ -41,7 +41,7 @@ jobs:
           echo "POD_ID=$POD_ID" >> $GITHUB_ENV
 
       - name: Wait for pod to be ready
-        run: sleep 60         
+        run: sleep 220
 
       - name: Get RunPod pod details
         run: |
@@ -57,7 +57,7 @@ jobs:
       - name: Set up Python
         uses: actions/setup-python@v4
         with:
-          python-version: "3.x"
+          python-version: "3.9"
 
       - name: Install Benchllama
         run: pip install benchllama

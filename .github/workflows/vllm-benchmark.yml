@@ -24,7 +24,7 @@ jobs:
         uses: actions/checkout@v4
 
       - name: Install RunPod CLI
-        run: wget --quiet --show-progress https://github.com/Run-Pod/runpodctl/releases/download/v1.14.3/runpodctl-linux-amd64 -O runpodctl && chmod +x runpodctl && sudo cp runpodctl /usr/bin/runpodctl | sudo bash
+        run: wget --quiet --show-progress https://github.com/Run-Pod/runpodctl/releases/download/v1.14.3/runpodctl-linux-amd64 -O runpodctl && chmod +x runpodctl && sudo cp runpodctl /usr/bin/runpodctl
 
       - name: Configure RunPod CLI
         run: runpodctl config --apiKey ${{ secrets.API_KEY }}
@@ -42,7 +42,7 @@ jobs:
           echo "POD_ID=$POD_ID" >> $GITHUB_ENV
 
       - name: Wait for RunPod Instance
-        run: sleep 100
+        run: sleep 220
 
       - name: Retrieve RunPod Endpoint
         run: |
@@ -54,32 +54,31 @@ jobs:
         with:
           python-version: "3.12"
 
-      - name: Clone and Build vLLM
+      - name: Install uv
         run: |
-          git clone https://github.com/vllm-project/vllm
-          cd vllm
-          VLLM_USE_PRECOMPILED=1 pip install --editable .
+          python -m pip install uv
 
-      - name: Install Benchmark Dependencies
-        run: pip install pandas datasets pynvml
-
-      - name: Run vLLM Benchmark
+      - name: Install and Run vLLM Benchmark
         run: |
-          cd vllm/benchmarks
-          python3 benchmark_serving.py --backend openai \
-              --base-url "http://$ENDPOINT" \
-              --dataset-name=random \
-              --model "${{ inputs.model }}" \
-              --result-filename "benchmark_result.json" \
-              --save-result \
-              --num-prompts ${{ inputs.num_prompts }} \
-              --seed 12345 | tee benchmark_output.log
+          uv venv vllm-env --python 3.12 --seed
+          source vllm-env/bin/activate
+          uv pip install vllm
+          vllm bench serve \
+            --backend openai \
+            --base-url "http://$ENDPOINT" \
+            --dataset-name random \
+            --model neuralmagic/Meta-Llama-3.1-8B-Instruct-FP8 \
+            --num-prompts 20 \
+            --seed 12345 \
+            --save-result \
+            --result-filename benchmark_result.json \
+            | tee benchmark_output.log
 
       - name: Generate Benchmark Summary
         run: |
           echo "## vLLM Benchmark Result" >> $GITHUB_STEP_SUMMARY
           echo "\`\`\`" >> $GITHUB_STEP_SUMMARY
-          grep -A 20 "============ Serving Benchmark Result" vllm/benchmarks/benchmark_output.log >> $GITHUB_STEP_SUMMARY
+          grep -A 20 "============ Serving Benchmark Result" benchmark_output.log >> $GITHUB_STEP_SUMMARY
           echo "\`\`\`" >> $GITHUB_STEP_SUMMARY
 
       - name: Upload Benchmark Results
